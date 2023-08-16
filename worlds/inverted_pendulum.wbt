@@ -1,0 +1,213 @@
+#VRML_SIM R2023b utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023a/projects/objects/backgrounds/protos/TexturedBackground.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023a/projects/objects/floors/protos/Floor.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/appearances/protos/Rubber.proto"
+
+WorldInfo {
+  basicTimeStep 16
+}
+Viewpoint {
+  orientation 0.24455484406661965 0.08138245944306242 -0.9662141706363809 2.519392027875484
+  position 2.411408484281488 1.7914120303950263 1.8426324507811203
+}
+TexturedBackground {
+}
+TexturedBackgroundLight {
+}
+Floor {
+  size 5 5
+}
+Robot {
+  translation 0 0 0.1
+  children [
+    HingeJoint {
+      jointParameters HingeJointParameters {
+        axis 0 1 0
+        anchor 0 0.125 0
+      }
+      device [
+        PositionSensor {
+          name "right wheel sensor"
+        }
+        RotationalMotor {
+          name "right wheel motor"
+        }
+      ]
+      endPoint Solid {
+        translation 0 0.124999 0
+        rotation 1 0 0 1.5707996938995747
+        children [
+          DEF WHEEL_SHAPE Shape {
+            appearance Rubber {
+            }
+            geometry Cylinder {
+              height 0.05
+              radius 0.1
+            }
+          }
+        ]
+        name "Right Wheel"
+        boundingObject USE WHEEL_SHAPE
+        physics Physics {
+        }
+      }
+    }
+    HingeJoint {
+      jointParameters HingeJointParameters {
+        axis 0 1 0
+        anchor 0 -0.125 0
+      }
+      device [
+        PositionSensor {
+          name "left wheel sensor"
+        }
+        RotationalMotor {
+          name "left wheel motor"
+        }
+      ]
+      endPoint Solid {
+        translation 0 -0.125 0
+        rotation 1 0 0 1.570790895516373
+        children [
+          DEF WHEEL_SHAPE Shape {
+            appearance Rubber {
+            }
+            geometry Cylinder {
+              height 0.05
+              radius 0.1
+            }
+          }
+        ]
+        name "Left Wheel"
+        boundingObject USE WHEEL_SHAPE
+        physics Physics {
+        }
+      }
+    }
+    Solid {
+      children [
+        DEF BODY_SHAPE Shape {
+          appearance Appearance {
+            material Material {
+              diffuseColor 0 0.333333 1
+            }
+          }
+          geometry Box {
+            size 0.1 0.25 0.1
+          }
+        }
+      ]
+      name "Body"
+      boundingObject USE BODY_SHAPE
+      physics Physics {
+      }
+    }
+    Accelerometer {
+    }
+    InertialUnit {
+    }
+    GPS {
+    }
+    Gyro {
+    }
+    Group {
+      children [
+        Solid {
+          translation 0 0 0.655
+          children [
+            DEF PLATE_SHAPE Shape {
+              geometry Cylinder {
+                height 0.01
+                radius 0.15
+              }
+            }
+          ]
+          name "plate"
+          boundingObject USE PLATE_SHAPE
+          physics Physics {
+          }
+        }
+        Solid {
+          translation 0 0 0.35
+          rotation 1 0 0 0
+          children [
+            DEF STICK_SHAPE Shape {
+              geometry Cylinder {
+                height 0.6
+                radius 0.01
+              }
+            }
+          ]
+          name "stick"
+          boundingObject USE STICK_SHAPE
+          physics Physics {
+          }
+        }
+      ]
+    }
+    DistanceSensor {
+      translation 0.055 0.041 0
+      children [
+        DEF DIS_SENSOR_SHAPE Shape {
+          appearance PBRAppearance {
+            metalness 0
+          }
+          geometry Box {
+            size 0.01 0.01 0.01
+          }
+        }
+      ]
+      name "FL distance sensor"
+    }
+    DistanceSensor {
+      translation 0.055 -0.041 0
+      children [
+        DEF DIS_SENSOR_SHAPE Shape {
+          appearance PBRAppearance {
+            metalness 0
+          }
+          geometry Box {
+            size 0.01 0.01 0.01
+          }
+        }
+      ]
+      name "FR distance sensor"
+    }
+    DistanceSensor {
+      translation -0.055 0.041 0
+      rotation 0 0 1 3.141592653589793
+      children [
+        DEF DIS_SENSOR_SHAPE Shape {
+          appearance PBRAppearance {
+            metalness 0
+          }
+          geometry Box {
+            size 0.01 0.01 0.01
+          }
+        }
+      ]
+      name "RL distance sensor"
+    }
+    DistanceSensor {
+      translation -0.055 -0.041 0
+      rotation 0 0 1 3.141592653589793
+      children [
+        DEF DIS_SENSOR_SHAPE Shape {
+          appearance PBRAppearance {
+            metalness 0
+          }
+          geometry Box {
+            size 0.01 0.01 0.01
+          }
+        }
+      ]
+      name "RR distance sensor"
+    }
+  ]
+  boundingObject USE BODY_SHAPE
+  physics Physics {
+  }
+  controller "inverted_pendulum"
+}
