@@ -28,6 +28,8 @@
 
 #define MAX_SPEED 10
 #define DISTANCE_SENSOR_NUM 4
+#define NUM_STATES 4
+#define NUM_INPUTS 2
 
 enum DistanceSensor {
   DS_FL,
@@ -38,17 +40,16 @@ enum DistanceSensor {
 
 enum AXIS { AXIS_X, AXIS_Y, AXIS_Z };
 
-enum STATES { STATE_X, STATE_X_DOT, STATE_THETA, STATE_THETA_DOT };
+enum STATES { STATE_X_DOT, STATE_PHI_DOT, STATE_THETA, STATE_THETA_DOT };
 
-double K[1][4] = {{-1.5291, -3.4149, -47.1491, -11.9149}};
+enum INPUS { INPUT_LEFT_MOTOR, INPUT_RIGHT_MOTOR };
 
-double states[4][1] = {{0}, {0}, {0}, {0}};
+double K[NUM_INPUTS][NUM_STATES] = {{-5, 1, -40, -10},
+                                    {-5, -1, -40, -10}};
 
-double B[4][1] = {{0}, {1}, {0}, {-1}};
+double states[NUM_STATES][1];
 
-double Bk[4][4];
-
-double r[4][1] = {{0}, {0}, {0}, {0}};
+double r[NUM_STATES][1];
 
 /**
  * Multiplies two matrices and stores the result in a third matrix.
@@ -99,9 +100,6 @@ int main(int argc, char** argv) {
   /* necessary to initialize webots stuff */
   wb_robot_init();
 
-  // Precompute Bk
-  matrix_multiply((double*)B, (double*)K, (double*)Bk, 4, 1, 4);
-
   /*
    * You should declare here WbDeviceTag variables for storing
    * robot devices like this:
@@ -134,7 +132,7 @@ int main(int argc, char** argv) {
   WbDeviceTag right_motor = wb_position_sensor_get_motor(right_motor_encoder);
 
   // Init keyboard
-  wb_keyboard_enable(TIME_STEP * 1000);
+  wb_keyboard_enable(TIME_STEP * 10000);
   bool enable_controller = true;
 
   /* main loop
@@ -147,6 +145,18 @@ int main(int argc, char** argv) {
       enable_controller = true;
     } else if (key == 'C') {
       enable_controller = false;
+    } else if (key == 'W') {
+      r[STATE_X_DOT][0] += 0.1;
+    } else if (key == 'S') {
+      r[STATE_X_DOT][0] -= 0.1;
+    } else if (key == 'Z') {
+      r[STATE_X_DOT][0] = 0;
+    } else if (key == 'A') {
+      r[STATE_PHI_DOT][0] += 0.1;
+    } else if (key == 'D') {
+      r[STATE_PHI_DOT][0] -= 0.1;
+    } else if (key == 'X') {
+      r[STATE_PHI_DOT][0] = 0;
     }
 
     /*
@@ -158,7 +168,7 @@ int main(int argc, char** argv) {
     const double val_ds[DISTANCE_SENSOR_NUM] = {
         wb_distance_sensor_get_value(ps[DS_FL]), wb_distance_sensor_get_value(ps[DS_FR]),
         wb_distance_sensor_get_value(ps[DS_RL]), wb_distance_sensor_get_value(ps[DS_RR])};
-        
+
     const double* val_accel = wb_accelerometer_get_values(acceletometer);
     const double* val_gyro = wb_gyro_get_values(gyro);
     const double* val_imu = wb_inertial_unit_get_roll_pitch_yaw(inertial_unit);
@@ -166,7 +176,7 @@ int main(int argc, char** argv) {
     const double* val_gps_vel = wb_gps_get_speed_vector(gps);
     const double left_motor_position = wb_position_sensor_get_value(left_motor_encoder);
     const double right_motor_position = wb_position_sensor_get_value(right_motor_encoder);
-    
+
     printf("Distance sensor values %f, %f, %f, %f\n", val_ds[DS_FL], val_ds[DS_FR],
            val_ds[DS_RL], val_ds[DS_RR]);
     printVector3("Accelerometer", val_accel);
@@ -177,19 +187,22 @@ int main(int argc, char** argv) {
     printf("Motors position: Left %f - Right %f\n", left_motor_position,
            right_motor_position);
 
-    states[STATE_X][0] = val_gps_pos[AXIS_X];
     states[STATE_X_DOT][0] = val_gps_vel[AXIS_X];
+    states[STATE_PHI_DOT][0] = val_gyro[AXIS_Z];
     states[STATE_THETA][0] = val_imu[AXIS_Y];
     states[STATE_THETA_DOT][0] = val_gyro[AXIS_Y];
 
-    const double error[4][1] = {{0}, {0}, {0}, {0}};
-    double input[1][1] = {0};
-    vector_subtract((double*)r, (double*)states, (double*)error, 4);
-    matrix_multiply((double*)K, (double*)error, (double*)input, 1, 4, 1);
+    const double error[NUM_STATES][NUM_INPUTS];
+    double input[NUM_INPUTS][1];
+    vector_subtract((double*)r, (double*)states, (double*)error, NUM_STATES);
+    matrix_multiply((double*)K, (double*)error, (double*)input, NUM_INPUTS, NUM_STATES,
+                    1);
     if (!enable_controller) {
-      input[0][0] = 0;
+      input[INPUT_LEFT_MOTOR][0] = 0;
+      input[INPUT_RIGHT_MOTOR][0] = 0;
     }
-    printf("Input %f\n", input[0][0]);
+    printf("Inputs Left Wheel: %f - Right Wheel: %f\n", input[INPUT_LEFT_MOTOR][0],
+           input[INPUT_RIGHT_MOTOR][0]);
 
     /* Process sensor data here */
 
@@ -198,8 +211,8 @@ int main(int argc, char** argv) {
      * wb_motor_set_position(my_actuator, 10.0);
      */
 
-    wb_motor_set_torque(left_motor, input[0][0]);
-    wb_motor_set_torque(right_motor, input[0][0]);
+    wb_motor_set_torque(left_motor, input[INPUT_LEFT_MOTOR][0]);
+    wb_motor_set_torque(right_motor, input[INPUT_RIGHT_MOTOR][0]);
   };
 
   /* Enter your cleanup code here */
