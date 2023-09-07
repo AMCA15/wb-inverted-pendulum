@@ -10,6 +10,7 @@
  * You may need to add include files like <webots/distance_sensor.h> or
  * <webots/motor.h>, etc.
  */
+#include <math.h>
 #include <stdio.h>
 #include <webots/accelerometer.h>
 #include <webots/distance_sensor.h>
@@ -26,7 +27,8 @@
  */
 #define TIME_STEP 16
 
-#define MAX_SPEED 10
+#define MAX_SPEED 1.0
+#define MAX_LINEAR_POSITION 0.3
 #define DISTANCE_SENSOR_NUM 4
 #define NUM_STATES 4
 #define NUM_INPUTS 2
@@ -44,8 +46,7 @@ enum STATES { STATE_X_DOT, STATE_PHI_DOT, STATE_THETA, STATE_THETA_DOT };
 
 enum INPUS { INPUT_LEFT_MOTOR, INPUT_RIGHT_MOTOR };
 
-double K[NUM_INPUTS][NUM_STATES] = {{-5, 1, -40, -10},
-                                    {-5, -1, -40, -10}};
+double K[NUM_INPUTS][NUM_STATES] = {{-10, 1, -80, -10}, {-10, -1, -80, -10}};
 
 double states[NUM_STATES][1];
 
@@ -130,10 +131,12 @@ int main(int argc, char** argv) {
 
   WbDeviceTag left_motor = wb_position_sensor_get_motor(left_motor_encoder);
   WbDeviceTag right_motor = wb_position_sensor_get_motor(right_motor_encoder);
+  WbDeviceTag linear_motor = wb_robot_get_device("linear motor");
 
   // Init keyboard
   wb_keyboard_enable(TIME_STEP * 10000);
   bool enable_controller = true;
+  double linear_motor_position_val = wb_motor_get_target_position(linear_motor);
 
   /* main loop
    * Perform simulation steps of TIME_STEP milliseconds
@@ -146,9 +149,9 @@ int main(int argc, char** argv) {
     } else if (key == 'C') {
       enable_controller = false;
     } else if (key == 'W') {
-      r[STATE_X_DOT][0] += 0.1;
+      r[STATE_X_DOT][0] = fmin(MAX_SPEED, r[STATE_X_DOT][0] + 0.1);
     } else if (key == 'S') {
-      r[STATE_X_DOT][0] -= 0.1;
+      r[STATE_X_DOT][0] = fmax(-MAX_SPEED, r[STATE_X_DOT][0] - 0.1);
     } else if (key == 'Z') {
       r[STATE_X_DOT][0] = 0;
     } else if (key == 'A') {
@@ -157,6 +160,11 @@ int main(int argc, char** argv) {
       r[STATE_PHI_DOT][0] -= 0.1;
     } else if (key == 'X') {
       r[STATE_PHI_DOT][0] = 0;
+    } else if (key == 'B') {
+      linear_motor_position_val =
+          fmin(MAX_LINEAR_POSITION, linear_motor_position_val + 0.05);
+    } else if (key == 'V') {
+      linear_motor_position_val = fmax(0, linear_motor_position_val - 0.05);
     }
 
     /*
@@ -210,6 +218,8 @@ int main(int argc, char** argv) {
      * Enter here functions to send actuator commands, like:
      * wb_motor_set_position(my_actuator, 10.0);
      */
+
+    wb_motor_set_position(linear_motor, linear_motor_position_val);
 
     wb_motor_set_torque(left_motor, input[INPUT_LEFT_MOTOR][0]);
     wb_motor_set_torque(right_motor, input[INPUT_RIGHT_MOTOR][0]);

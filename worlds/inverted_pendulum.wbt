@@ -4,13 +4,19 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023a/project
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023a/projects/objects/floors/protos/Floor.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/appearances/protos/Rubber.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/tables/protos/Table.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/kitchen/utensils/protos/Plate.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/kitchen/breakfast/protos/BiscuitBox.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/kitchen/breakfast/protos/JamJar.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/kitchen/utensils/protos/Glass.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/appearances/protos/RoughPine.proto"
 
 WorldInfo {
   basicTimeStep 16
 }
 Viewpoint {
-  orientation 0.24455484406661965 0.08138245944306242 -0.9662141706363809 2.519392027875484
-  position 2.411408484281488 1.7914120303950263 1.8426324507811203
+  orientation -0.19444017749540524 -0.058347873484007544 0.9791774829087163 3.713185912090328
+  position 1.9184304621757196 1.3597037395221327 1.2834070497194128
 }
 TexturedBackground {
 }
@@ -114,28 +120,56 @@ Robot {
     }
     Group {
       children [
-        Solid {
-          translation 0 0 0.655
-          children [
-            DEF PLATE_SHAPE Shape {
-              geometry Cylinder {
-                height 0.01
-                radius 0.15
-              }
+        SliderJoint {
+          jointParameters JointParameters {
+            position 0.15
+            maxStop 0.3
+            springConstant 10
+            dampingConstant 5
+            staticFriction 15
+          }
+          device [
+            LinearMotor {
+              maxPosition 0.3
             }
           ]
-          name "plate"
-          boundingObject USE PLATE_SHAPE
-          physics Physics {
+          endPoint Solid {
+            translation 0 0 0.35
+            children [
+              DEF UPPER_STICK_SHAPE Group {
+                children [
+                  Shape {
+                    geometry Cylinder {
+                      height 0.3
+                      radius 0.01
+                    }
+                  }
+                  Pose {
+                    translation 0 0 0.155
+                    children [
+                      Shape {
+                        geometry Cylinder {
+                          height 0.01
+                          radius 0.15
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+            boundingObject USE UPPER_STICK_SHAPE
+            physics Physics {
+            }
           }
         }
         Solid {
-          translation 0 0 0.35
+          translation 0 0 0.2
           rotation 1 0 0 0
           children [
             DEF STICK_SHAPE Shape {
               geometry Cylinder {
-                height 0.6
+                height 0.3
                 radius 0.01
               }
             }
@@ -210,4 +244,60 @@ Robot {
   physics Physics {
   }
   controller "inverted_pendulum"
+}
+Table {
+  translation -2.03446 -1.54056 1.08358e-13
+  rotation 0 0 1 1.5707996938995747
+  size 1.5 0.9 0.61
+  feetSize 0.05 0.05
+}
+Plate {
+  translation -2.02719 -1.85997 0.62
+}
+JamJar {
+  translation -2.30975 -0.8871 0.62
+}
+Glass {
+  translation -2.06508 -1.69057 0.62
+}
+BiscuitBox {
+  translation -2.23313 -1.75006 0.632
+}
+Solid {
+  translation -2.01496 -1.36277 0.7
+  children [
+    Group {
+      children [
+        Pose {
+          translation 0 -0.15 -0.025
+          children [
+            DEF TRAY_BASE_SHAPE Shape {
+              appearance RoughPine {
+              }
+              geometry Box {
+                size 0.4 0.05 0.025
+              }
+            }
+          ]
+        }
+        Pose {
+          translation 0 0.15 -0.025
+          children [
+            USE TRAY_BASE_SHAPE
+          ]
+        }
+        Pose {
+          children [
+            Shape {
+              appearance RoughPine {
+              }
+              geometry Box {
+                size 0.4 0.35 0.025
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
 }
