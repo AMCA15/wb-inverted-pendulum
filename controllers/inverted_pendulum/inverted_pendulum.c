@@ -27,7 +27,8 @@
  */
 #define TIME_STEP 16
 
-#define MAX_SPEED 1.0
+#define MAX_LINEAR_SPEED 1.0
+#define MAX_ANGULAR_VELOCITY 5.0
 #define MAX_LINEAR_POSITION 0.3
 #define DISTANCE_SENSOR_NUM 4
 #define NUM_STATES 4
@@ -149,15 +150,15 @@ int main(int argc, char** argv) {
     } else if (key == 'C') {
       enable_controller = false;
     } else if (key == 'W') {
-      r[STATE_X_DOT][0] = fmin(MAX_SPEED, r[STATE_X_DOT][0] + 0.1);
+      r[STATE_X_DOT][0] = fmin(MAX_LINEAR_SPEED, r[STATE_X_DOT][0] + 0.1);
     } else if (key == 'S') {
-      r[STATE_X_DOT][0] = fmax(-MAX_SPEED, r[STATE_X_DOT][0] - 0.1);
+      r[STATE_X_DOT][0] = fmax(-MAX_LINEAR_SPEED, r[STATE_X_DOT][0] - 0.1);
     } else if (key == 'Z') {
       r[STATE_X_DOT][0] = 0;
     } else if (key == 'A') {
-      r[STATE_PHI_DOT][0] += 0.1;
+      r[STATE_PHI_DOT][0] = fmin(MAX_ANGULAR_VELOCITY, r[STATE_PHI_DOT][0] + 0.1);
     } else if (key == 'D') {
-      r[STATE_PHI_DOT][0] -= 0.1;
+      r[STATE_PHI_DOT][0] = fmax(-MAX_ANGULAR_VELOCITY, r[STATE_PHI_DOT][0] - 0.1);
     } else if (key == 'X') {
       r[STATE_PHI_DOT][0] = 0;
     } else if (key == 'B') {
