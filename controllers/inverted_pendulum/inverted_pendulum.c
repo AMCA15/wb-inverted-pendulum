@@ -31,6 +31,8 @@
 #define MAX_ANGULAR_VELOCITY 5.0
 #define MAX_LINEAR_POSITION 0.3
 #define DISTANCE_SENSOR_NUM 4
+#define WHEEL_RADIUS 0.1
+
 #define NUM_STATES 4
 #define NUM_INPUTS 2
 
@@ -138,6 +140,11 @@ int main(int argc, char** argv) {
   wb_keyboard_enable(TIME_STEP * 10000);
   bool enable_controller = true;
   double linear_motor_position_val = wb_motor_get_target_position(linear_motor);
+  wb_motor_set_velocity(linear_motor, 0.5);
+
+  double prev_position = 0;
+  double position = 0;
+  double speed = 0;
 
   /* main loop
    * Perform simulation steps of TIME_STEP milliseconds
@@ -196,7 +203,11 @@ int main(int argc, char** argv) {
     printf("Motors position: Left %f - Right %f\n", left_motor_position,
            right_motor_position);
 
-    states[STATE_X_DOT][0] = val_gps_vel[AXIS_X];
+    position = (left_motor_position + right_motor_position) * WHEEL_RADIUS / 2;
+    speed = (position - prev_position) / TIME_STEP * 1000;
+    prev_position = position;
+
+    states[STATE_X_DOT][0] = speed;
     states[STATE_PHI_DOT][0] = val_gyro[AXIS_Z];
     states[STATE_THETA][0] = val_imu[AXIS_Y];
     states[STATE_THETA_DOT][0] = val_gyro[AXIS_Y];

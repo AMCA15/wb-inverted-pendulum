@@ -62,12 +62,12 @@ int main(int argc, char** argv) {
     //   wb_motor_set_position(linear_motor, MAX_LINEAR_MOTOR_POSITION);
     // }
 
-    if (wb_robot_get_time() >= 100) {
+    if (wb_robot_get_time() >= 52.3) {
       wb_motor_set_velocity(left_motor, 0);
       wb_motor_set_velocity(right_motor, 0);
-    } else if (wb_robot_get_time() >= 47.7) {
-      wb_motor_set_velocity(left_motor, 5);
-      wb_motor_set_velocity(right_motor, 5);
+    } else if (wb_robot_get_time() >= 47.4) {
+      wb_motor_set_velocity(left_motor, 10);
+      wb_motor_set_velocity(right_motor, 10);
     } else if (wb_robot_get_time() >= 12) {
       wb_motor_set_velocity(left_motor, 3);
       wb_motor_set_velocity(right_motor, -3);

@@ -13,10 +13,18 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/project
 
 WorldInfo {
   basicTimeStep 16
+  contactProperties [
+    ContactProperties {
+      material2 "free_wheel"
+      coulombFriction [
+        0
+      ]
+    }
+  ]
 }
 Viewpoint {
-  orientation -0.19855759107022858 -0.06905123728518182 0.9776537268674289 3.796852179067386
-  position 2.137506195942548 1.6832958323533467 1.4408362666093628
+  orientation -0.17990775432661132 -0.034076376561618944 0.9830930782451814 3.509565316984083
+  position 1.9168629970780886 0.914641305177962 1.1125037325445482
 }
 TexturedBackground {
 }
@@ -43,7 +51,7 @@ Robot {
       ]
       endPoint Solid {
         translation 0 0.124999 0
-        rotation 1 3.3722879707318745e-11 -3.372433204039795e-11 1.570799693899545
+        rotation 1 0 0 1.5707996938995055
         children [
           DEF WHEEL_SHAPE Shape {
             appearance Rubber {
@@ -75,7 +83,7 @@ Robot {
       ]
       endPoint Solid {
         translation 0 -0.125 0
-        rotation 1 3.116473208776509e-11 -3.1162259185427137e-11 1.5707908955163552
+        rotation 1 0 0 1.5707908955163146
         children [
           DEF WHEEL_SHAPE Shape {
             appearance Rubber {
@@ -126,7 +134,7 @@ Robot {
             maxStop 0.3
             springConstant 10
             dampingConstant 5
-            staticFriction 30
+            staticFriction 100
           }
           device [
             LinearMotor {
@@ -134,11 +142,15 @@ Robot {
             }
           ]
           endPoint Solid {
-            translation 0 0 0.35000000000000014
+            translation 0 0 0.35000000000000053
             children [
               DEF UPPER_STICK_SHAPE Group {
                 children [
                   Shape {
+                    appearance PBRAppearance {
+                      baseColor 0.521569 0.521569 0.521569
+                      metalness 0
+                    }
                     geometry Cylinder {
                       height 0.3
                       radius 0.01
@@ -148,9 +160,12 @@ Robot {
                     translation 0 0 0.155
                     children [
                       Shape {
-                        geometry Cylinder {
-                          height 0.01
-                          radius 0.15
+                        appearance PBRAppearance {
+                          baseColor 0.521569 0.521569 0.521569
+                          metalness 0
+                        }
+                        geometry Box {
+                          size 0.3 0.3 0.01
                         }
                       }
                     ]
@@ -168,6 +183,10 @@ Robot {
           rotation 1 0 0 0
           children [
             DEF STICK_SHAPE Shape {
+              appearance PBRAppearance {
+                baseColor 0.521569 0.521569 0.521569
+                metalness 0
+              }
               geometry Cylinder {
                 height 0.3
                 radius 0.01
@@ -252,37 +271,37 @@ Table {
   feetSize 0.05 0.05
 }
 Plate {
-  translation -1.95229 -1.37933 0.68
+  translation -1.95229 -1.37933 0.67
 }
 JamJar {
-  translation -2.1053 -1.22437 0.683
+  translation -2.1053 -1.22437 0.673
 }
 Glass {
-  translation -1.96661 -1.22849 0.682
+  translation -1.96661 -1.22849 0.672
 }
 BiscuitBox {
-  translation -2.11564 -1.41803 0.682
+  translation -2.11564 -1.41803 0.672
 }
 Solid {
-  translation -2.01496 -1.36277 0.67
+  translation -2.01496 -1.36277 0.665
   rotation 0 0 1 1.5707996938995747
   children [
     DEF TRAY_GROUP Group {
       children [
         Pose {
-          translation 0 -0.15 -0.0375
+          translation 0 -0.15 -0.03
           children [
             DEF TRAY_BASE_SHAPE Shape {
               appearance RoughPine {
               }
               geometry Box {
-                size 0.4 0.05 0.05
+                size 0.4 0.01 0.05
               }
             }
           ]
         }
         Pose {
-          translation 0 0.15 -0.0375
+          translation 0 0.15 -0.03
           children [
             USE TRAY_BASE_SHAPE
           ]
@@ -293,7 +312,7 @@ Solid {
               appearance RoughPine {
               }
               geometry Box {
-                size 0.4 0.35 0.025
+                size 0.4 0.35 0.01
               }
             }
           ]
@@ -321,6 +340,7 @@ Robot {
         }
       ]
       name "solid(4)"
+      contactMaterial "free_wheel"
       boundingObject USE AUX_ROBOT_FREE_WHEEL_SHAPE
       physics Physics {
       }
@@ -331,6 +351,7 @@ Robot {
         USE AUX_ROBOT_FREE_WHEEL_SHAPE
       ]
       name "solid(5)"
+      contactMaterial "free_wheel"
       boundingObject USE AUX_ROBOT_FREE_WHEEL_SHAPE
       physics Physics {
       }
@@ -395,7 +416,7 @@ Robot {
           jointParameters JointParameters {
             minStop -0.001
             maxStop 0.015
-            staticFriction 100
+            staticFriction 50
           }
           device [
             LinearMotor {
