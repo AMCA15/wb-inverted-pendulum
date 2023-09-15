@@ -23,8 +23,8 @@ WorldInfo {
   ]
 }
 Viewpoint {
-  orientation -0.17990775432661132 -0.034076376561618944 0.9830930782451814 3.509565316984083
-  position 1.9168629970780886 0.914641305177962 1.1125037325445482
+  orientation -0.1796852792162284 -0.05998338135324404 0.9818936777443968 3.7748552421575043
+  position 1.5611038927753451 1.1873265218561329 1.0594483967621502
 }
 TexturedBackground {
 }
@@ -51,7 +51,7 @@ Robot {
       ]
       endPoint Solid {
         translation 0 0.124999 0
-        rotation 1 0 0 1.5707996938995055
+        rotation 1 -2.551395949956219e-16 -3.1401796307153465e-16 1.5707996938995055
         children [
           DEF WHEEL_SHAPE Shape {
             appearance Rubber {
@@ -83,16 +83,9 @@ Robot {
       ]
       endPoint Solid {
         translation 0 -0.125 0
-        rotation 1 0 0 1.5707908955163146
+        rotation 1 0 3.1401934450118313e-16 1.5707908955163137
         children [
-          DEF WHEEL_SHAPE Shape {
-            appearance Rubber {
-            }
-            geometry Cylinder {
-              height 0.05
-              radius 0.1
-            }
-          }
+          USE WHEEL_SHAPE
         ]
         name "Left Wheel"
         boundingObject USE WHEEL_SHAPE

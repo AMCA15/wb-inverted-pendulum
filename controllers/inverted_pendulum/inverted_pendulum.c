@@ -21,6 +21,7 @@
 #include <webots/motor.h>
 #include <webots/position_sensor.h>
 #include <webots/robot.h>
+#include <webots/utils/ansi_codes.h>
 
 /*
  * You may want to add macros here.
@@ -33,7 +34,7 @@
 #define DISTANCE_SENSOR_NUM 4
 #define WHEEL_RADIUS 0.1
 
-#define NUM_STATES 4
+#define NUM_STATES 6
 #define NUM_INPUTS 2
 
 enum DistanceSensor {
@@ -45,11 +46,19 @@ enum DistanceSensor {
 
 enum AXIS { AXIS_X, AXIS_Y, AXIS_Z };
 
-enum STATES { STATE_X_DOT, STATE_PHI_DOT, STATE_THETA, STATE_THETA_DOT };
+enum STATES {
+  STATE_X,
+  STATE_X_DOT,
+  STATE_PHI,
+  STATE_PHI_DOT,
+  STATE_THETA,
+  STATE_THETA_DOT
+};
 
 enum INPUS { INPUT_LEFT_MOTOR, INPUT_RIGHT_MOTOR };
 
-double K[NUM_INPUTS][NUM_STATES] = {{-10, 1, -80, -10}, {-10, -1, -80, -10}};
+double K[NUM_INPUTS][NUM_STATES] = {{-10, -10, 12, 1, -80, -10},
+                                    {-10, -10, -12, -1, -80, -10}};
 
 double states[NUM_STATES][1];
 
@@ -91,8 +100,39 @@ void vector_subtract(double* a, double* b, double* c, int n) {
   }
 }
 
-void printVector3(char* title, const double* v) {
-  printf("%s: %f, %f, %f\n", title, v[AXIS_X], v[AXIS_Y], v[AXIS_Z]);
+void print_vector3(char* title, const double* v) {
+  printf("%s%13s%s: %s%9f %s%9f %s%9f%s\n", ANSI_BOLD, title, ANSI_RESET,
+         ANSI_RED_FOREGROUND, v[AXIS_X], ANSI_GREEN_FOREGROUND, v[AXIS_Y],
+         ANSI_BLUE_FOREGROUND, v[AXIS_Z], ANSI_RESET);
+}
+
+void print_controller_mode(bool linear_speed, bool angular_rate) {
+  printf(
+      "%s Controller Mode:%s Linear %s%s - Angular %s%s\n", ANSI_BOLD, ANSI_RESET,
+      linear_speed ? ANSI_GREEN_FOREGROUND "SPEED" : ANSI_BLUE_FOREGROUND "DISPLACEMENT",
+      ANSI_RESET,
+      angular_rate ? ANSI_GREEN_FOREGROUND "VELOCITY" : ANSI_BLUE_FOREGROUND "ANGLE",
+      ANSI_RESET);
+}
+
+double limiter(double value, double min, double max) {
+  return fmax(min, fmin(max, value));
+}
+
+void set_linear_displacement(double value) {
+  r[STATE_X][0] = value;
+}
+
+void set_linear_speed(double value) {
+  r[STATE_X_DOT][0] = limiter(value, -MAX_LINEAR_SPEED, MAX_LINEAR_SPEED);
+}
+
+void set_angular_position(double value) {
+  r[STATE_PHI][0] = value;
+}
+
+void set_angular_rate(double value) {
+  r[STATE_PHI_DOT][0] = limiter(value, -MAX_ANGULAR_VELOCITY, MAX_ANGULAR_VELOCITY);
 }
 
 /*
@@ -139,12 +179,16 @@ int main(int argc, char** argv) {
   // Init keyboard
   wb_keyboard_enable(TIME_STEP * 10000);
   bool enable_controller = true;
+  bool enable_lin_spd_mode = true;
+  bool enable_ang_rat_mode = true;
   double linear_motor_position_val = wb_motor_get_target_position(linear_motor);
   wb_motor_set_velocity(linear_motor, 0.5);
 
   double prev_position = 0;
   double position = 0;
   double speed = 0;
+  double pos_offset = 0;
+  double rotation = 0;
 
   /* main loop
    * Perform simulation steps of TIME_STEP milliseconds
@@ -157,22 +201,66 @@ int main(int argc, char** argv) {
     } else if (key == 'C') {
       enable_controller = false;
     } else if (key == 'W') {
-      r[STATE_X_DOT][0] = fmin(MAX_LINEAR_SPEED, r[STATE_X_DOT][0] + 0.1);
+      if (enable_lin_spd_mode) {
+        set_linear_speed(r[STATE_X_DOT][0] + 0.1);
+      } else {
+        set_linear_displacement(r[STATE_X][0] + 0.1);
+      }
     } else if (key == 'S') {
-      r[STATE_X_DOT][0] = fmax(-MAX_LINEAR_SPEED, r[STATE_X_DOT][0] - 0.1);
+      if (enable_lin_spd_mode) {
+        set_linear_speed(r[STATE_X_DOT][0] - 0.1);
+      } else {
+        set_linear_displacement(r[STATE_X][0] - 0.1);
+      }
     } else if (key == 'Z') {
-      r[STATE_X_DOT][0] = 0;
+      if (enable_lin_spd_mode) {
+        set_linear_speed(0);
+      } else {
+        set_linear_displacement(0);
+      }
     } else if (key == 'A') {
-      r[STATE_PHI_DOT][0] = fmin(MAX_ANGULAR_VELOCITY, r[STATE_PHI_DOT][0] + 0.1);
+      if (enable_ang_rat_mode) {
+        set_angular_rate(r[STATE_PHI_DOT][0] + 0.1);
+      } else {
+        set_angular_position(r[STATE_PHI][0] + 0.1);
+      }
     } else if (key == 'D') {
-      r[STATE_PHI_DOT][0] = fmax(-MAX_ANGULAR_VELOCITY, r[STATE_PHI_DOT][0] - 0.1);
+      if (enable_ang_rat_mode) {
+        set_angular_rate(r[STATE_PHI_DOT][0] - 0.1);
+      } else {
+        set_angular_position(r[STATE_PHI][0] - 0.1);
+      }
     } else if (key == 'X') {
-      r[STATE_PHI_DOT][0] = 0;
+      if (enable_ang_rat_mode) {
+        set_angular_rate(0);
+      } else {
+        set_angular_position(0);
+      }
     } else if (key == 'B') {
       linear_motor_position_val =
-          fmin(MAX_LINEAR_POSITION, linear_motor_position_val + 0.05);
+          limiter(linear_motor_position_val + 0.05, 0, MAX_LINEAR_POSITION);
     } else if (key == 'V') {
-      linear_motor_position_val = fmax(0, linear_motor_position_val - 0.05);
+      linear_motor_position_val =
+          limiter(linear_motor_position_val - 0.05, 0, MAX_LINEAR_POSITION);
+    } else if (key == 'K') {
+      enable_lin_spd_mode = false;
+      r[STATE_X][0] = 0;
+      r[STATE_X_DOT][0] = 0;
+      pos_offset = position;
+    } else if (key == WB_KEYBOARD_SHIFT + 'K') {
+      r[STATE_X][0] = 0;
+      r[STATE_X_DOT][0] = 0;
+      enable_lin_spd_mode = true;
+    } else if (key == 'L') {
+      r[STATE_PHI][0] = 0;
+      r[STATE_PHI_DOT][0] = 0;
+      rotation = 0;
+      enable_ang_rat_mode = false;
+    } else if (key == WB_KEYBOARD_SHIFT + 'L') {
+      r[STATE_PHI][0] = 0;
+      r[STATE_PHI_DOT][0] = 0;
+      rotation = 0;
+      enable_ang_rat_mode = true;
     }
 
     /*
@@ -193,21 +281,26 @@ int main(int argc, char** argv) {
     const double left_motor_position = wb_position_sensor_get_value(left_motor_encoder);
     const double right_motor_position = wb_position_sensor_get_value(right_motor_encoder);
 
-    printf("Distance sensor values %f, %f, %f, %f\n", val_ds[DS_FL], val_ds[DS_FR],
-           val_ds[DS_RL], val_ds[DS_RR]);
-    printVector3("Accelerometer", val_accel);
-    printVector3("Gyro", val_gyro);
-    printVector3("Inertial unit", val_imu);
-    printVector3("GPS position", val_gps_pos);
-    printVector3("GPS velocity", val_gps_vel);
-    printf("Motors position: Left %f - Right %f\n", left_motor_position,
-           right_motor_position);
+    ANSI_CLEAR_CONSOLE();
+    print_controller_mode(enable_lin_spd_mode, enable_ang_rat_mode);
+    print_vector3("Accelerometer", val_accel);
+    print_vector3("Gyro", val_gyro);
+    print_vector3("Inertial unit", val_imu);
+    print_vector3("GPS position", val_gps_pos);
+    print_vector3("GPS velocity", val_gps_vel);
+    printf("%sDistance sensor:%s %.2f, %.2f, %.2f, %.2f\n", ANSI_BOLD, ANSI_RESET,
+           val_ds[DS_FL], val_ds[DS_FR], val_ds[DS_RL], val_ds[DS_RR]);
+    printf("%sMotors position:%s Left %9f - Right %9f\n", ANSI_BOLD, ANSI_RESET,
+           left_motor_position, right_motor_position);
 
     position = (left_motor_position + right_motor_position) * WHEEL_RADIUS / 2;
     speed = (position - prev_position) / TIME_STEP * 1000;
     prev_position = position;
+    rotation += val_gyro[AXIS_Z] * TIME_STEP / 1000;
 
+    states[STATE_X][0] = enable_lin_spd_mode ? 0 : position - pos_offset;
     states[STATE_X_DOT][0] = speed;
+    states[STATE_PHI][0] = enable_ang_rat_mode ? 0 : rotation;
     states[STATE_PHI_DOT][0] = val_gyro[AXIS_Z];
     states[STATE_THETA][0] = val_imu[AXIS_Y];
     states[STATE_THETA_DOT][0] = val_gyro[AXIS_Y];
@@ -221,8 +314,15 @@ int main(int argc, char** argv) {
       input[INPUT_LEFT_MOTOR][0] = 0;
       input[INPUT_RIGHT_MOTOR][0] = 0;
     }
-    printf("Inputs Left Wheel: %f - Right Wheel: %f\n", input[INPUT_LEFT_MOTOR][0],
-           input[INPUT_RIGHT_MOTOR][0]);
+    printf("%-6sMotors Inputs:%s Left %9f - Right %9f\n", ANSI_BOLD, ANSI_RESET,
+           input[INPUT_LEFT_MOTOR][0], input[INPUT_RIGHT_MOTOR][0]);
+    printf("%sReference:%s X %9f X_dot %9f PHI %9f PHI_dot %9f THETA %9f THETA_DOT %9f\n",
+           ANSI_BOLD, ANSI_RESET, r[STATE_X][0], r[STATE_X_DOT][0], r[STATE_PHI][0],
+           r[STATE_PHI_DOT][0], r[STATE_THETA][0], r[STATE_THETA_DOT][0]);
+    printf("%-7sStates:%s X %9f X_dot %9f PHI %9f PHI_dot %9f THETA %9f THETA_DOT %9f\n",
+           ANSI_BOLD, ANSI_RESET, states[STATE_X][0], states[STATE_X_DOT][0],
+           states[STATE_PHI][0], states[STATE_PHI_DOT][0], states[STATE_THETA][0],
+           states[STATE_THETA_DOT][0]);
 
     /* Process sensor data here */
 
